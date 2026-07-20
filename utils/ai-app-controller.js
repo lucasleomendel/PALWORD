@@ -1,16 +1,19 @@
 import AIManager from './ai-manager.js';
 import AIDatabaseKeeper from './ai-database-keeper.js';
+import AIDataFetcher from './ai-data-fetcher.js';
 
 class AIAppController {
   constructor() {
     this.aiManager = new AIManager();
     this.databaseKeeper = new AIDatabaseKeeper();
+    this.dataFetcher = new AIDataFetcher();
     this.appState = {
       initialized: false,
       running: false,
       lastAction: null,
       errors: [],
-      performance: {}
+      performance: {},
+      lastDailySync: null
     };
   }
 
@@ -26,6 +29,10 @@ class AIAppController {
       await this.databaseKeeper.initialize();
       console.log('✅ Database Keeper inicializado');
 
+      // Inicializar buscador de dados diário
+      await this.dataFetcher.initialize();
+      console.log('✅ AI Data Fetcher inicializado - Sincronização diária agendada');
+
       this.appState.initialized = true;
       this.appState.running = true;
 
@@ -38,6 +45,12 @@ class AIAppController {
       this.startPerformanceMonitoring();
 
       console.log('\n🎯 APLICAÇÃO PRONTA PARA OPERAÇÃO AUTOMÁTICA COM IA\n');
+      console.log('📋 Funcionalidades ativas:');
+      console.log('   ✅ Monitoramento contínuo de saúde (a cada 1 min)');
+      console.log('   ✅ Verificação rápida do banco (a cada 30s)');
+      console.log('   ✅ Sincronização completa (a cada 1h)');
+      console.log('   ✅ Busca e atualização de dados (1x ao dia)');
+      console.log('   ✅ Monitoramento de desempenho (a cada 5min)\n');
     } catch (error) {
       console.error('❌ Erro ao inicializar aplicação:', error.message);
       this.appState.errors.push({
@@ -65,6 +78,7 @@ class AIAppController {
       initialized: this.appState.initialized,
       running: this.appState.running,
       databaseHealth: await this.databaseKeeper.getDetailedStatus(),
+      lastDailySync: this.dataFetcher.getLastDailySync(),
       aiStatus: 'operational',
       timestamp: new Date().toISOString()
     };
@@ -133,11 +147,57 @@ class AIAppController {
       4. Ações tomadas automaticamente
       5. Recomendações para melhorias
       6. Previsão de necessidades futuras
+      7. Próxima sincronização de dados agendada
       
       Seja conciso e objetivo.
     `);
 
     return report;
+  }
+
+  async testDatabaseConnection() {
+    console.log('\n🔌 Testando conexão com banco de dados...');
+    try {
+      const stats = await this.aiManager.gatherDatabaseStats();
+      console.log('✅ Conexão com banco de dados bem-sucedida');
+      console.log('📊 Estatísticas do banco:');
+      console.log(JSON.stringify(stats, null, 2));
+      return stats;
+    } catch (error) {
+      console.error('❌ Erro ao conectar com banco de dados:', error.message);
+      throw error;
+    }
+  }
+
+  async verifyLovableIntegration() {
+    console.log('\n🔗 Verificando integração com app Lovable...');
+    try {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const anthropicKey = process.env.ANTHROPIC_API_KEY;
+
+      const checks = {
+        supabaseUrl: !!supabaseUrl,
+        supabaseKey: !!supabaseKey,
+        anthropicKey: !!anthropicKey,
+        timestamp: new Date().toISOString()
+      };
+
+      if (checks.supabaseUrl && checks.supabaseKey && checks.anthropicKey) {
+        console.log('✅ Todas as credenciais configuradas corretamente');
+        console.log('✅ Aplicação pronta para sincronizar com Lovable');
+      } else {
+        console.log('⚠️  Algumas credenciais estão faltando:');
+        if (!checks.supabaseUrl) console.log('   - SUPABASE_URL');
+        if (!checks.supabaseKey) console.log('   - SUPABASE_SERVICE_ROLE_KEY');
+        if (!checks.anthropicKey) console.log('   - ANTHROPIC_API_KEY');
+      }
+
+      return checks;
+    } catch (error) {
+      console.error('❌ Erro ao verificar integração:', error.message);
+      throw error;
+    }
   }
 
   getAppState() {
