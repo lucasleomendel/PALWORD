@@ -3,9 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "import:pals": "node scripts/import-pals.js"
+    "import:pals": "node scripts/import-pals.js",
+    "start:ai": "node scripts/start-ai-controller.js",
+    "sync": "node scripts/import-pals.js && node scripts/start-ai-controller.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.28.0",
     "@supabase/supabase-js": "^2.45.0",
     "cheerio": "^1.0.0",
     "node-fetch": "^3.3.2"
